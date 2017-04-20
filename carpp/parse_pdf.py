@@ -22,52 +22,59 @@ def merge_rows(rows):
     else:
         return [' '.join(i).strip() for i in zip(*rows)]
 
-def process_tables(tables):
-    # flags=[False, False, False]
+def print_tables(tables):
     for table in tables:
-        for row in table[1]:
-            print(type_row(row), row)
+        for row in table:
+            print row
 
 
-def columize_pdf(pdf_page, page_num, good_pages, bad_pages):
-    found_correct_col = False
+def columize_pdf(pdf_page, column_goal=12):
+    sug_calibrations = range(3,8)
+    best_calibration = 1
+    max_column = 1
 
-    for cal in [5, 6, 7, 8, 4, 3]:
-        table = get_tables(pdf_page, calibrate=cal)[0]
-        # if page_num == 0:
-        #     head = table[:8]
-        #     table = table[8:]
-        print('Table on page %d has %d rows' % (page_num, len(table)))
-        if len(table[0]) != 12:
-            print(len(table[0]), table[0])
-            print('changing cal %d' % (cal,))
-            continue
-        else:
-            found_correct_col = True
-            good_pages.append((page_num, table))
-            for row in table:
-                print(len(row), row)
+    best_table = []
+    for cal in sug_calibrations:
+        print '- Checking calibration: %d' % (cal,)
+        table = get_tables(pdf_page, calibrate=cal)
+        print table
+        print table[0]
+        table = table[0]
+        first_row = table[0]
+
+        # checking is row has correct number of columns of pick best so far
+        if len(first_row) == column_goal:
+            print '    number of columns: %d' % len(first_row)
+            print '    PERFECT MATCH FOUND'
+            best_calibration = cal
+            max_col = len(first_row)
+            best_table = table
             break
+        else:
+            print '     number of columns: %d' % len(first_row)
+            if max_column < len(first_row):
+                print '     a better calibration found'
+                best_calibration = cal
+                max_column = len(first_row)
+                best_table = table
+            continue
 
-    if not found_correct_col:
-        bad_pages.append((page_num, table))
+    return table
+
 
 
 if __name__ == '__main__':
-    with open('ss3.pdf', 'rb') as f:
-        good = []
-        bad = []
+    tables = []
+    with open('tests/sample_1_page.pdf', 'rb') as f:
         main_pdf = PdfFileReader(f)
         for i in range(main_pdf.numPages):
             tmp_pdf = io.BytesIO()
             output = PdfFileWriter()
             output.addPage(main_pdf.getPage(i))
             output.write(tmp_pdf)
-            print('= PROCESSING page: %d' % i)
-            columize_pdf(tmp_pdf, page_num=i, good_pages=good, bad_pages=bad)
+            print('========== PROCESSING page: %d ==============' % i)
+            table = columize_pdf(tmp_pdf)
+            tables.append(table)
 
         print('--------------')
-        print('good ones %d:' % len(good))
-        print('bad ones %d:' % len(bad))
-
-        cars = process_tables(good)
+        print print_tables(tables)

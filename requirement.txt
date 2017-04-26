@@ -1,0 +1,7 @@
+BeautifulSoup==3.2.1
+numpy==1.12.1
+pdfminer==20110515
+pdftables==0.0.4
+pyPdf==1.13
+PyPrind==2.9.9
+requests==2.13.0

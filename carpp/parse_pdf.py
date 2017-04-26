@@ -1,9 +1,8 @@
 import io
+from itertools import chain
 from operator import add
 from pyPdf import PdfFileReader, PdfFileWriter
 from pdftables import get_tables
-
-
 
 def type_row(row):
     if not row[0]:
@@ -22,10 +21,14 @@ def merge_rows(rows):
     else:
         return [' '.join(i).strip() for i in zip(*rows)]
 
-def print_tables(tables):
+def print_tables(tables, with_type=False):
     for table in tables:
         for row in table:
-            print row
+            if with_type:
+                output = list(chain([type_row(row)], row))
+            else:
+                output = row
+            print output
 
 
 def columize_pdf(pdf_page, column_goal=12):
@@ -37,8 +40,8 @@ def columize_pdf(pdf_page, column_goal=12):
     for cal in sug_calibrations:
         print '- Checking calibration: %d' % (cal,)
         table = get_tables(pdf_page, calibrate=cal)
-        print table
-        print table[0]
+        # print table
+        # print table[0]
         table = table[0]
         first_row = table[0]
 
@@ -59,22 +62,4 @@ def columize_pdf(pdf_page, column_goal=12):
                 best_table = table
             continue
 
-    return table
-
-
-
-if __name__ == '__main__':
-    tables = []
-    with open('tests/sample_1_page.pdf', 'rb') as f:
-        main_pdf = PdfFileReader(f)
-        for i in range(main_pdf.numPages):
-            tmp_pdf = io.BytesIO()
-            output = PdfFileWriter()
-            output.addPage(main_pdf.getPage(i))
-            output.write(tmp_pdf)
-            print('========== PROCESSING page: %d ==============' % i)
-            table = columize_pdf(tmp_pdf)
-            tables.append(table)
-
-        print('--------------')
-        print print_tables(tables)
+    return best_table
